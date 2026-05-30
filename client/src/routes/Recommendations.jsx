@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from '../components/ProductCard.jsx';
 import TryOnModal from '../components/TryOnModal.jsx';
+import EditProductModal from '../components/EditProductModal.jsx';
 import { useStylistStore } from '../store/useStylistStore.js';
 import { api } from '../lib/api.js';
 import { formatPrice, categoryLabel } from '../lib/format.js';
@@ -19,6 +20,8 @@ export default function Recommendations() {
   const [loading, setLoading] = useState(!recommendation);
   const [error, setError] = useState(null);
   const [tryOnItems, setTryOnItems] = useState(null);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [deletingProduct, setDeletingProduct] = useState(null);
 
   const isInCart = (id) => cart.some((c) => c.id === id);
 
@@ -29,6 +32,30 @@ export default function Recommendations() {
       return;
     }
     setTryOnItems(items);
+  };
+
+  const refresh = () => window.location.reload();
+
+  const handleEdit = (product) => setEditingProduct(product);
+
+  const handleEditSaved = async () => {
+    setEditingProduct(null);
+    refresh();
+  };
+
+  const handleDelete = async (product) => {
+    setDeletingProduct(product);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingProduct) return;
+    try {
+      await api.deleteProduct(deletingProduct.id);
+      setDeletingProduct(null);
+      refresh();
+    } catch (e) {
+      setError(e.message);
+    }
   };
 
   const fetchRec = async (seed) => {
@@ -201,6 +228,8 @@ export default function Recommendations() {
               product={p}
               onAdd={addToCart}
               onTryOn={(item) => openTryOn([item])}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
               isInCart={isInCart(p.id)}
             />
           ))}
@@ -218,6 +247,45 @@ export default function Recommendations() {
         onClose={() => setTryOnItems(null)}
         items={tryOnItems || []}
       />
+
+      <EditProductModal
+        open={!!editingProduct}
+        onClose={() => setEditingProduct(null)}
+        product={editingProduct}
+        onSaved={handleEditSaved}
+      />
+
+      <AnimatePresence>
+        {deletingProduct && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setDeletingProduct(null)}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur"
+            role="dialog"
+            aria-modal="true"
+          >
+            <motion.div
+              onClick={(e) => e.stopPropagation()}
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 10 }}
+              className="card card-accent w-full max-w-sm p-6 text-center sm:p-8"
+            >
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600 text-2xl">!</div>
+              <h2 className="mt-4 font-display text-2xl text-burgundy-700">Delete product?</h2>
+              <p className="mt-2 text-sm text-ink/70">
+                Are you sure you want to delete <strong>{deletingProduct.name}</strong>?
+              </p>
+              <div className="mt-6 flex gap-3 justify-center">
+                <button onClick={() => setDeletingProduct(null)} className="btn-ghost">Cancel</button>
+                <button onClick={confirmDelete} className="rounded-full bg-red-600 px-6 py-3 text-sm font-semibold uppercase tracking-wider text-cream hover:bg-red-700 transition-all">Delete</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.section>
   );
 }

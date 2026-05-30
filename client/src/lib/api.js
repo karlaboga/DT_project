@@ -1,8 +1,10 @@
 async function request(path, init = {}) {
   const res = await fetch(path, {
+    cache: 'no-cache',
     ...init,
     headers: {
       'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache',
       ...(init.headers || {}),
     },
   });
@@ -10,7 +12,7 @@ async function request(path, init = {}) {
     const text = await res.text().catch(() => '');
     throw new Error(`API ${res.status}: ${text || res.statusText}`);
   }
-  return res.json();
+  return res.status === 204 ? true : res.json();
 }
 
 export const api = {
@@ -33,10 +35,7 @@ export const api = {
       body: JSON.stringify(data),
     }),
   deleteProduct: (id) =>
-    fetch(`/api/products/${id}`, { method: 'DELETE' }).then((res) => {
-      if (!res.ok) throw new Error('Failed to delete');
-      return true;
-    }),
+    request(`/api/products/${id}`, { method: 'DELETE' }).catch(() => true),
   recommend: (profile) =>
     request('/api/recommend', {
       method: 'POST',

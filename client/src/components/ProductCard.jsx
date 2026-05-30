@@ -8,7 +8,7 @@ const PLACEHOLDER =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400"><rect width="300" height="400" fill="#f0f0f0"/><text x="150" y="200" font-family="Georgia" font-size="20" fill="#993355" text-anchor="middle">Image unavailable</text></svg>`
   );
 
-function ProductCard({ product, onAdd, onTryOn, isInCart, compact = false }) {
+function ProductCard({ product, onAdd, onTryOn, onEdit, onDelete, isInCart, compact = false }) {
   const [imgSrc, setImgSrc] = useState(product.image);
   const [loaded, setLoaded] = useState(false);
   const overBudget = product.reasons?.some((r) => r === 'Over budget');
@@ -43,9 +43,31 @@ function ProductCard({ product, onAdd, onTryOn, isInCart, compact = false }) {
         <div className="absolute right-3 top-3 rounded-full bg-cream/90 px-2.5 py-1 text-[10px] font-medium uppercase tracking-widest text-burgundy-700">
           {product.site}
         </div>
+        {(onEdit || onDelete) && (
+          <div className="absolute right-3 bottom-3 flex gap-1">
+            {onEdit && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onEdit(product); }}
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-cream/90 text-burgundy-700 hover:bg-burgundy-700 hover:text-cream transition-all"
+                aria-label="Edit product"
+              >
+                ✎
+              </button>
+            )}
+            {onDelete && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onDelete(product); }}
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-cream/90 text-red-600 hover:bg-red-600 hover:text-cream transition-all"
+                aria-label="Delete product"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
-      <div className={`flex flex-1 flex-col gap-2 p-${compact ? '4' : '5'}`}>
+      <div className={`flex flex-1 flex-col gap-2 ${compact ? 'p-4' : 'p-5'}`}>
         <div className="flex items-baseline justify-between gap-2">
           <span className="text-[10px] uppercase tracking-widest text-ink/40">
             {categoryLabel(product.category)}

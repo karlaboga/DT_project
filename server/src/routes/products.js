@@ -35,13 +35,11 @@ router.get('/products', (req, res) => {
     return res.status(400).json({ error: 'Invalid query', details: parsed.error.flatten() });
   }
   const items = filterProducts(parsed.data);
-  res.set('Cache-Control', 'public, max-age=300');
   res.json({ count: items.length, items });
 });
 
 router.get('/products/all', (_req, res) => {
   const items = getAllProducts();
-  res.set('Cache-Control', 'public, max-age=300');
   res.json({ count: items.length, items });
 });
 
