@@ -21,6 +21,22 @@ export const api = {
     ).toString();
     return request(`/api/products${qs ? `?${qs}` : ''}`);
   },
+  allProducts: () => request('/api/products/all'),
+  createProduct: (data) =>
+    request('/api/products', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateProduct: (id, data) =>
+    request(`/api/products/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  deleteProduct: (id) =>
+    fetch(`/api/products/${id}`, { method: 'DELETE' }).then((res) => {
+      if (!res.ok) throw new Error('Failed to delete');
+      return true;
+    }),
   recommend: (profile) =>
     request('/api/recommend', {
       method: 'POST',

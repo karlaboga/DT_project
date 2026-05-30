@@ -8,6 +8,7 @@ import Profile from './routes/Profile.jsx';
 
 const Recommendations = lazy(() => import('./routes/Recommendations.jsx'));
 const Cart = lazy(() => import('./routes/Cart.jsx'));
+const Admin = lazy(() => import('./routes/Admin.jsx'));
 
 function PageFallback() {
   return (
@@ -34,6 +35,7 @@ export default function App() {
               <Route path="/" element={<Profile />} />
               <Route path="/outfit" element={<Recommendations />} />
               <Route path="/cart" element={<Cart />} />
+              <Route path="/admin" element={<Admin />} />
               <Route path="*" element={<Profile />} />
             </Routes>
           </AnimatePresence>

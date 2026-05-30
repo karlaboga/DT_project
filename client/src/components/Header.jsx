@@ -23,7 +23,10 @@ export default function Header() {
           </div>
         </Link>
 
-        <nav className="flex items-center gap-2 text-sm">
+        <nav className="flex items-center gap-4 text-sm">
+          <Link to="/admin" className="text-xs uppercase tracking-[0.2em] text-ink/40 hover:text-burgundy-700 transition-colors">
+            Admin
+          </Link>
           {location.pathname !== '/cart' && cartCount > 0 && (
             <Link to="/cart" className="chip hover:bg-burgundy-700 hover:text-cream transition-colors">
               <span>Cart</span>
