@@ -42,6 +42,10 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`[server] listening on http://localhost:${PORT}`);
 });
+
+['SIGTERM', 'SIGINT', 'SIGHUP'].forEach((sig) =>
+  process.on(sig, () => server.close())
+);
