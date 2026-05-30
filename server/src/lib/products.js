@@ -1,58 +1,54 @@
-import { readFileSync, writeFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import db from './db.js';
 
-const here = dirname(fileURLToPath(import.meta.url));
-const dataPath = join(here, '..', 'data', 'products.json');
-
-let PRODUCTS = JSON.parse(readFileSync(dataPath, 'utf8'));
-
-function saveToFile() {
-  writeFileSync(dataPath, JSON.stringify(PRODUCTS, null, 2), 'utf8');
-}
+const allStmt = db.prepare('SELECT * FROM products ORDER BY id');
+const byIdStmt = db.prepare('SELECT * FROM products WHERE id = ?');
+const insertStmt = db.prepare(
+  'INSERT INTO products (id, name, price, site, image, url, gender, category) VALUES (@id, @name, @price, @site, @image, @url, @gender, @category)'
+);
+const updateStmt = db.prepare(
+  'UPDATE products SET name = @name, price = @price, site = @site, image = @image, url = @url, gender = @gender, category = @category WHERE id = @id'
+);
+const deleteStmt = db.prepare('DELETE FROM products WHERE id = ?');
 
 export function getAllProducts() {
-  return PRODUCTS;
+  return allStmt.all();
 }
 
 export function filterProducts({ gender, category, maxPrice, site } = {}) {
-  return PRODUCTS.filter((p) => {
-    if (gender && p.gender !== gender) return false;
-    if (category && p.category !== category) return false;
-    if (site && p.site.toLowerCase() !== site.toLowerCase()) return false;
-    if (maxPrice != null && p.price > maxPrice) return false;
-    return true;
-  });
+  const clauses = [];
+  const params = [];
+  if (gender) { clauses.push('gender = ?'); params.push(gender); }
+  if (category) { clauses.push('category = ?'); params.push(category); }
+  if (maxPrice != null) { clauses.push('price <= ?'); params.push(Number(maxPrice)); }
+  if (site) { clauses.push('LOWER(site) = LOWER(?)'); params.push(site); }
+  const sql = clauses.length ? `SELECT * FROM products WHERE ${clauses.join(' AND ')} ORDER BY id` : 'SELECT * FROM products ORDER BY id';
+  return db.prepare(sql).all(...params);
 }
 
 export function getProductById(id) {
-  return PRODUCTS.find((p) => p.id === id);
+  return byIdStmt.get(id) || null;
 }
 
 export function createProduct(data) {
-  const newProduct = {
+  const product = {
     id: `prod-${Date.now()}`,
     ...data,
   };
-  PRODUCTS.push(newProduct);
-  saveToFile();
-  return newProduct;
+  insertStmt.run(product);
+  return product;
 }
 
 export function updateProduct(id, data) {
-  const index = PRODUCTS.findIndex((p) => p.id === id);
-  if (index === -1) return null;
-
-  PRODUCTS[index] = { ...PRODUCTS[index], ...data, id }; // Ensure ID doesn't change
-  saveToFile();
-  return PRODUCTS[index];
+  const existing = byIdStmt.get(id);
+  if (!existing) return null;
+  const updated = { ...existing, ...data, id };
+  updateStmt.run(updated);
+  return updated;
 }
 
 export function deleteProduct(id) {
-  const index = PRODUCTS.findIndex((p) => p.id === id);
-  if (index === -1) return false;
-
-  PRODUCTS.splice(index, 1);
-  saveToFile();
+  const existing = byIdStmt.get(id);
+  if (!existing) return false;
+  deleteStmt.run(id);
   return true;
 }
